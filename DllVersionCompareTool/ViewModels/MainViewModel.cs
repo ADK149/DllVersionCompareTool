@@ -90,7 +90,7 @@ public class MainViewModel : ObservableObject
 
             foreach (var folderVm in group.Folders)
             {
-                var infos = DllScanner.Scan(folderVm.FolderPath);
+                var infos = DllScanner.Scan(folderVm.FolderPath, group.IncludeSubdirectories);
                 var dict = new Dictionary<string, DllInfo>(infos.Count, StringComparer.OrdinalIgnoreCase);
                 foreach (var info in infos)
                 {

@@ -12,11 +12,21 @@ namespace DllVersionCompareTool.ViewModels;
 public class FolderGroupViewModel : ObservableObject
 {
     private string _name = "新组";
+    private bool _includeSubdirectories = false;
 
     public string Name
     {
         get => _name;
         set => SetProperty(ref _name, value);
+    }
+
+    /// <summary>
+    /// 是否包含所有子项（递归搜索子目录下的 dll 文件）
+    /// </summary>
+    public bool IncludeSubdirectories
+    {
+        get => _includeSubdirectories;
+        set => SetProperty(ref _includeSubdirectories, value);
     }
 
     public ObservableCollection<FolderItemViewModel> Folders { get; } = new();
