@@ -1,0 +1,155 @@
+<Window x:Class="DllVersionCompareTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DllVersionCompareTool"
+        xmlns:vm="clr-namespace:DllVersionCompareTool.ViewModels"
+        mc:Ignorable="d"
+        Title="DLL 版本比较工具"
+        Height="700" Width="1100"
+        WindowStartupLocation="CenterScreen">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="420" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- 左侧：文件夹组列表 -->
+        <Border Grid.Column="0" BorderBrush="#DDD" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top"
+                        Background="#F5F5F5"
+                        Padding="10"
+                        BorderBrush="#DDD" BorderThickness="0,0,0,1">
+                    <Button Content="添加文件夹组"
+                            Command="{Binding AddGroupCommand}"
+                            HorizontalAlignment="Left"
+                            Padding="20,8"
+                            FontSize="14"
+                            FontWeight="Bold"/>
+                </Border>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="5">
+                    <ItemsControl ItemsSource="{Binding Groups}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#CCC"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Margin="5"
+                                        Padding="10"
+                                        Background="White">
+                                    <StackPanel>
+                                        <!-- 组名 + 删除组 -->
+                                        <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                                            <Button DockPanel.Dock="Right"
+                                                    Content="删除组"
+                                                    Command="{Binding DataContext.RemoveGroupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,3"
+                                                    Margin="5,0,0,0" />
+                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontWeight="Bold"
+                                                     FontSize="14"
+                                                     VerticalContentAlignment="Center" />
+                                        </DockPanel>
+
+                                        <!-- 该组下的所有"选择文件夹"组件 -->
+                                        <ItemsControl ItemsSource="{Binding Folders}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <DockPanel LastChildFill="True" Margin="0,3">
+                                                        <Button DockPanel.Dock="Right"
+                                                                Content="删除"
+                                                                Command="{Binding DataContext.RemoveFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Padding="6,2"
+                                                                Margin="3,0,0,0" />
+                                                        <Button DockPanel.Dock="Right"
+                                                                Content="选择..."
+                                                                Command="{Binding DataContext.BrowseFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Padding="6,2"
+                                                                Margin="3,0,0,0" />
+                                                        <TextBox Text="{Binding FolderPath, UpdateSourceTrigger=PropertyChanged}"
+                                                                 VerticalContentAlignment="Center" />
+                                                    </DockPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- 添加文件夹 -->
+                                        <Button Content="+ 添加文件夹"
+                                                Command="{Binding DataContext.AddFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                HorizontalAlignment="Left"
+                                                Margin="0,8,0,0"
+                                                Padding="8,3" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- 右侧：开始比较 + TabControl(每个组一个标签页) -->
+        <DockPanel Grid.Column="1">
+            <Border DockPanel.Dock="Top"
+                    Background="#F5F5F5"
+                    Padding="10"
+                    BorderBrush="#DDD" BorderThickness="0,0,0,1">
+                <Button Content="开始比较"
+                        Command="{Binding StartCompareCommand}"
+                        Padding="20,8"
+                        FontSize="14"
+                        FontWeight="Bold"
+                        HorizontalAlignment="Left" />
+            </Border>
+
+            <TabControl ItemsSource="{Binding Groups}" Margin="0">
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" Padding="5,2" />
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <DataGrid ItemsSource="{Binding ResultsView}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  IsReadOnly="True"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  AlternatingRowBackground="#F9F9F9"
+                                  Margin="5"
+                                  RowHeight="26">
+                            <!-- 行样式：比较结果为"不同"时背景为浅红色 -->
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Result}" Value="不同">
+                                            <Setter Property="Background" Value="#FFCCCC" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="编号"     Binding="{Binding Number}"  Width="60" />
+                                <DataGridTextColumn Header="文件名"   Binding="{Binding FileName}" Width="Auto" />
+                                <DataGridTextColumn Header="比较结果" Binding="{Binding Result}"  Width="120" />
+                                <DataGridTextColumn Header="备注"     Binding="{Binding Notes}"   Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>
+        </DockPanel>
+    </Grid>
+</Window>
