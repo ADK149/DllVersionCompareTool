@@ -53,9 +53,9 @@
                                                     Padding="8,3"
                                                     Margin="5,0,0,0" />
                                             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                                     FontWeight="Bold"
-                                                     FontSize="14"
-                                                     VerticalContentAlignment="Center" />
+                                                         FontWeight="Bold"
+                                                         FontSize="14"
+                                                         VerticalContentAlignment="Center" />
                                         </DockPanel>
 
                                         <!-- 包含所有子项选项 -->
@@ -135,7 +135,7 @@
                                   HeadersVisibility="Column"
                                   AlternatingRowBackground="#F9F9F9"
                                   Margin="5"
-                                  RowHeight="26">
+                                  RowHeight="48">
                             <!-- 行样式：比较结果为"不同"时背景为浅红色 -->
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
@@ -147,10 +147,43 @@
                                 </Style>
                             </DataGrid.RowStyle>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="编号"     Binding="{Binding Number}"  Width="60" />
-                                <DataGridTextColumn Header="文件名"   Binding="{Binding FileName}" Width="Auto" />
-                                <DataGridTextColumn Header="比较结果" Binding="{Binding Result}"  Width="120" />
-                                <DataGridTextColumn Header="备注"     Binding="{Binding Notes}"   Width="*" />
+                                <DataGridTextColumn Header="编号"     Binding="{Binding Number}"  Width="60">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="文件名"   Binding="{Binding FileName}" Width="Auto">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="比较结果" Binding="{Binding Result}"  Width="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="备注" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                          HorizontalScrollBarVisibility="Auto"
+                                                          MaxHeight="120">
+                                                <TextBlock Text="{Binding Notes}"
+                                                           TextWrapping="Wrap"
+                                                           Padding="2,0" />
+                                            </ScrollViewer>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DataTemplate>
