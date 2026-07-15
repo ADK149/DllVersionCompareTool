@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows.Data;
 using DllVersionCompareTool.Models;
@@ -43,9 +44,25 @@ public class FolderGroupViewModel : ObservableObject
         // 默认添加两个文件夹选择组件
         Folders.Add(new FolderItemViewModel());
         Folders.Add(new FolderItemViewModel());
+        RefreshFolderIndexes();
+
+        Folders.CollectionChanged += OnFoldersCollectionChanged;
 
         ResultsView = CollectionViewSource.GetDefaultView(Results);
         ResultsView.SortDescriptions.Add(
             new SortDescription(nameof(CompareResultItem.FileName), ListSortDirection.Ascending));
+    }
+
+    private void OnFoldersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        RefreshFolderIndexes();
+    }
+
+    private void RefreshFolderIndexes()
+    {
+        for (int i = 0; i < Folders.Count; i++)
+        {
+            Folders[i].Index = i + 1;
+        }
     }
 }

@@ -81,6 +81,10 @@
                                                                 CommandParameter="{Binding}"
                                                                 Padding="6,2"
                                                                 Margin="3,0,0,0" />
+                                                        <TextBlock Text="{Binding Index}"
+                                                                   DockPanel.Dock="Left"
+                                                                   VerticalAlignment="Center"
+                                                                   Width="20" />
                                                         <TextBox Text="{Binding FolderPath, UpdateSourceTrigger=PropertyChanged}"
                                                                  VerticalContentAlignment="Center" />
                                                     </DockPanel>
