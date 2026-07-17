@@ -45,7 +45,19 @@ public static class DllComparer
             return new CompareSummary("缺失", "所有文件夹均未找到该文件");
 
         if (present.Count < fileInfos.Count)
-            return new CompareSummary("缺失", $"仅 {present.Count}/{fileInfos.Count} 个文件夹包含此文件");
+        {
+            var stringBuilder = new StringBuilder();
+            for (int i = 0; i < fileInfos.Count; i++)
+            {
+                var info = fileInfos[i];
+                stringBuilder.Append(info != null
+                    ? $"文件夹{i + 1}: {info.Size} 字节, 版本 {info.Version}"
+                    : $"文件夹{i + 1}: 缺失");
+                if (i < fileInfos.Count - 1) stringBuilder.AppendLine();
+            }
+            return new CompareSummary("缺失", $"仅 {present.Count}/{fileInfos.Count} 个文件夹包含此文件\n{stringBuilder.ToString()}");
+        }
+            
 
         var first = present[0];
         bool allSame = present.All(i => i.Size == first.Size && i.Version == first.Version);
