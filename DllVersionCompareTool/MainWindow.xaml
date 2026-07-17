@@ -114,12 +114,18 @@
                     Background="#F5F5F5"
                     Padding="10"
                     BorderBrush="#DDD" BorderThickness="0,0,0,1">
-                <Button Content="开始比较"
-                        Command="{Binding StartCompareCommand}"
-                        Padding="20,8"
-                        FontSize="14"
-                        FontWeight="Bold"
-                        HorizontalAlignment="Left" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="开始比较"
+                            Command="{Binding StartCompareCommand}"
+                            Padding="20,8"
+                            FontSize="14"
+                            FontWeight="Bold"
+                            HorizontalAlignment="Left" />
+                    <Label Content="{Binding StatusText}"
+                           VerticalContentAlignment="Center"
+                           Margin="15,0,0,0"
+                           FontSize="13" />
+                </StackPanel>
             </Border>
 
             <TabControl ItemsSource="{Binding Groups}" Margin="0">

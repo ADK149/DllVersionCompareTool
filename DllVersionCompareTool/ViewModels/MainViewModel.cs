@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
 using DllVersionCompareTool.Models;
 using DllVersionCompareTool.Services;
 using Microsoft.Win32;
@@ -18,9 +20,17 @@ public class MainViewModel : ObservableObject
     public RelayCommand AddFolderCommand { get; }
     public RelayCommand RemoveFolderCommand { get; }
     public RelayCommand BrowseFolderCommand { get; }
-    public RelayCommand StartCompareCommand { get; }
+    public AsyncRelayCommand StartCompareCommand { get; }
 
     private int _groupCounter = 0;
+
+    private string _statusText = "状态：未开始";
+
+    public string StatusText
+    {
+        get => _statusText;
+        set => SetProperty(ref _statusText, value);
+    }
 
     public MainViewModel()
     {
@@ -29,7 +39,7 @@ public class MainViewModel : ObservableObject
         AddFolderCommand = new RelayCommand(p => AddFolder(p as FolderGroupViewModel));
         RemoveFolderCommand = new RelayCommand(p => RemoveFolder(p as FolderItemViewModel));
         BrowseFolderCommand = new RelayCommand(p => BrowseFolder(p as FolderItemViewModel));
-        StartCompareCommand = new RelayCommand(_ => StartCompare());
+        StartCompareCommand = new AsyncRelayCommand(_ => StartCompareAsync());
 
         // 默认给一个组，方便用户直接添加文件夹开始比较
         AddGroup();
@@ -78,29 +88,44 @@ public class MainViewModel : ObservableObject
         }
     }
 
-    private void StartCompare()
+    private async Task StartCompareAsync()
     {
+        StatusText = "状态：扫描文件中...";
+
         foreach (var group in Groups)
         {
             group.Results.Clear();
 
-            // 1. 扫描每个文件夹，建立 "文件名 -> DllInfo" 映射，并收集所有出现过的文件名
-            var perFolderDicts = new List<Dictionary<string, DllInfo>>(group.Folders.Count);
-            var allNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var folderPaths = group.Folders.Select(f => f.FolderPath).ToList();
+            var includeSubdirs = group.IncludeSubdirectories;
 
-            foreach (var folderVm in group.Folders)
+            // 将扫描逻辑放到后台线程
+            var scanResult = await Task.Run(() =>
             {
-                var infos = DllScanner.Scan(folderVm.FolderPath, group.IncludeSubdirectories);
-                var dict = new Dictionary<string, DllInfo>(infos.Count, StringComparer.OrdinalIgnoreCase);
-                foreach (var info in infos)
-                {
-                    dict[info.FileName] = info;
-                    allNames.Add(info.FileName);
-                }
-                perFolderDicts.Add(dict);
-            }
+                var perFolderDicts = new List<Dictionary<string, DllInfo>>(folderPaths.Count);
+                var allNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            if(allNames.Count == 0)
+                foreach (var folderPath in folderPaths)
+                {
+                    var infos = DllScanner.Scan(folderPath, includeSubdirs);
+                    var dict = new Dictionary<string, DllInfo>(infos.Count, StringComparer.OrdinalIgnoreCase);
+                    foreach (var info in infos)
+                    {
+                        dict[info.FileName] = info;
+                        allNames.Add(info.FileName);
+                    }
+                    perFolderDicts.Add(dict);
+                }
+
+                return new { PerFolderDicts = perFolderDicts, AllNames = allNames };
+            });
+
+            StatusText = "状态：比对文件中...";
+
+            var perFolderDicts = scanResult.PerFolderDicts;
+            var allNames = scanResult.AllNames;
+
+            if (allNames.Count == 0)
             {
                 group.Results.Add(new CompareResultItem
                 {
@@ -109,28 +134,39 @@ public class MainViewModel : ObservableObject
                     Result = "未比较",
                     Notes = "所有文件夹内未找到.dll文件"
                 });
+                continue;
             }
 
-            // 2. 按文件名排序后逐个调用 DllComparer 比较
-            int number = 1;
-            foreach (var name in allNames.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+            // 比较逻辑也放到后台线程
+            var compareResults = await Task.Run(() =>
             {
-                var perFolder = group.Folders
-                    .Select((_, i) => perFolderDicts[i].TryGetValue(name, out var v) ? (DllInfo?)v : null)
-                    .ToList();
-
-                // ====== 调用"用户可自定义"的比较方法 ======
-                var summary = DllComparer.Compare(perFolder);
-                // =========================================
-
-                group.Results.Add(new CompareResultItem
+                var results = new List<CompareResultItem>();
+                int number = 1;
+                foreach (var name in allNames.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
                 {
-                    Number = number++,
-                    FileName = name,
-                    Result = summary.Result,
-                    Notes = summary.Notes,
-                });
+                    var perFolder = folderPaths
+                        .Select((_, i) => perFolderDicts[i].TryGetValue(name, out var v) ? (DllInfo?)v : null)
+                        .ToList();
+
+                    var summary = DllComparer.Compare(perFolder);
+
+                    results.Add(new CompareResultItem
+                    {
+                        Number = number++,
+                        FileName = name,
+                        Result = summary.Result,
+                        Notes = summary.Notes,
+                    });
+                }
+                return results;
+            });
+
+            foreach (var item in compareResults)
+            {
+                group.Results.Add(item);
             }
         }
+
+        StatusText = "状态：比较结束";
     }
 }
