@@ -100,6 +100,17 @@ public class MainViewModel : ObservableObject
                 perFolderDicts.Add(dict);
             }
 
+            if(allNames.Count == 0)
+            {
+                group.Results.Add(new CompareResultItem
+                {
+                    Number = 1,
+                    FileName = "",
+                    Result = "未比较",
+                    Notes = "所有文件夹内未找到.dll文件"
+                });
+            }
+
             // 2. 按文件名排序后逐个调用 DllComparer 比较
             int number = 1;
             foreach (var name in allNames.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
